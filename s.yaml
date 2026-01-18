@@ -1,0 +1,28 @@
+edition: 3.0.0
+name: oss-cert-renewer-app
+access: default
+
+resources:
+  osscert-system:
+    component: fc3
+    props:
+      region: ${env(OSS_REGION)}
+      functionName: oss-cert-renewer-function
+      runtime: go1
+      code: ./cmd/fc
+      handler: main
+      memorySize: 128
+      timeout: 600
+      environmentVariables:
+        OSS_REGION: ${env(OSS_REGION)}
+        OSS_BUCKETS: ${env(OSS_BUCKETS)}
+        ACME_EMAIL: ${env(ACME_EMAIL)}
+        ALIBABA_CLOUD_ACCESS_KEY_ID: ${env(ALIYUN_ACCESS_KEY_ID)}
+        ALIBABA_CLOUD_ACCESS_KEY_SECRET: ${env(ALIYUN_ACCESS_KEY_SECRET)}
+      triggers:
+        - name: renewal-timer
+          type: timer
+          config:
+            cronExpression: ${env(CRON_EXPRESSION)}
+            enable: true
+            payload: ''

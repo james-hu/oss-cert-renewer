@@ -1,0 +1,40 @@
+name: Deploy to Aliyun FC
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+          
+      - name: Build Binary
+        run: |
+          cd cmd/fc
+          GOOS=linux GOARCH=amd64 go build -o main main.go
+          
+      - name: Install Serverless Devs
+        run: npm install -g @serverless-devs/s
+
+      - name: Configure Aliyun Credentials
+        run: |
+          s config add --AccessKeyID "${{ secrets.ALIYUN_ACCESS_KEY_ID }}" --AccessKeySecret "${{ secrets.ALIYUN_ACCESS_KEY_SECRET }}" --AccountID "${{ secrets.ALIYUN_ACCOUNT_ID }}" -a default -f --access default
+
+      - name: Deploy
+        env:
+          OSS_REGION: ${{ secrets.OSS_REGION }}
+          OSS_BUCKETS: ${{ secrets.OSS_BUCKETS }}
+          ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
+          ALIYUN_ACCESS_KEY_ID: ${{ secrets.ALIYUN_ACCESS_KEY_ID }}
+          ALIYUN_ACCESS_KEY_SECRET: ${{ secrets.ALIYUN_ACCESS_KEY_SECRET }}
+          CRON_EXPRESSION: ${{ secrets.CRON_EXPRESSION || '0 0 4 * * 0' }} # Default: Every Sunday at 04:00 UTC
+        run: s deploy -y

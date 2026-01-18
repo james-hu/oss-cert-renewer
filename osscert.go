@@ -21,9 +21,12 @@ import (
 	"github.com/go-acme/lego/v4/registration"
 )
 
-func Run() (rst string, err error) {
+func Run(ossBucketName string) (rst string, err error) {
 	var OSS_REGION = os.Getenv("OSS_REGION")
-	var OSS_BUCKET = os.Getenv("OSS_BUCKET")
+	var OSS_BUCKET = ossBucketName
+	if OSS_BUCKET == "" {
+		OSS_BUCKET = os.Getenv("OSS_BUCKET")
+	}
 	var ACME_EMAIL = os.Getenv("ACME_EMAIL")
 
 	ossConfig := oss.LoadDefaultConfig().WithCredentialsProvider(credentials.NewEnvironmentVariableCredentialsProvider()).WithRegion(OSS_REGION)

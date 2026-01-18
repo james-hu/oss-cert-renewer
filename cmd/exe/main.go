@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	rst, err := osscert.Run()
+	rst, err := osscert.Run("")
 	if err != nil {
 		log.Fatalln(err)
 	}
