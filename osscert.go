@@ -29,7 +29,16 @@ func Run(ossBucketName string) (rst string, err error) {
 	}
 	var ACME_EMAIL = os.Getenv("ACME_EMAIL")
 
-	ossConfig := oss.LoadDefaultConfig().WithCredentialsProvider(credentials.NewEnvironmentVariableCredentialsProvider()).WithRegion(OSS_REGION)
+	var credsProvider credentials.CredentialsProvider
+	if os.Getenv("OSS_ACCESS_KEY_ID") != "" && os.Getenv("OSS_ACCESS_KEY_SECRET") != "" {
+		credsProvider = credentials.NewEnvironmentVariableCredentialsProvider()
+	} else {
+		akId := os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_ID")
+		akSecret := os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET")
+		akToken := os.Getenv("ALIBABA_CLOUD_SECURITY_TOKEN")
+		credsProvider = credentials.NewStaticCredentialsProvider(akId, akSecret, akToken)
+	}
+	ossConfig := oss.LoadDefaultConfig().WithCredentialsProvider(credsProvider).WithRegion(OSS_REGION)
 	ossClient := oss.NewClient(ossConfig)
 	response, err := ossClient.ListCname(context.TODO(), &oss.ListCnameRequest{Bucket: &OSS_BUCKET})
 	if err != nil {
