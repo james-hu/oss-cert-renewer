@@ -1,28 +1,40 @@
 edition: 3.0.0
-name: oss-cert-renewer-app
+name: oss-cert-renewer
 access: default
 
 resources:
-  osscert-system:
+  oss-cert-renewer:
     component: fc3
+    actions:
+      pre-${regex('deploy|local')}: 
+        - run: GO111MODULE=on go mod tidy
+          path: .
+        - run: GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o target/main main.go
+          path: ./cmd/fc
     props:
       region: ${env(OSS_REGION)}
-      functionName: oss-cert-renewer-function
+      functionName: oss-cert-renewer
+      description: "Automatically renews SSL certificates for Aliyun OSS CNAMEs using Let's Encrypt"
       runtime: go1
-      code: ./cmd/fc
+      code: ./cmd/fc/target/main
       handler: main
+      cpu: 0.1
       memorySize: 128
+      diskSize: 512
       timeout: 600
+      logConfig:
+        enableRequestMetrics: false
+        enableInstanceMetrics: false
+        log_ttl: 14
+      role: acs:ram::${env(ALIYUN_ACCOUNT_ID)}:role/OssCertRenewerFunctionRole
       environmentVariables:
         OSS_REGION: ${env(OSS_REGION)}
         OSS_BUCKETS: ${env(OSS_BUCKETS)}
         ACME_EMAIL: ${env(ACME_EMAIL)}
-        ALIBABA_CLOUD_ACCESS_KEY_ID: ${env(ALIYUN_ACCESS_KEY_ID)}
-        ALIBABA_CLOUD_ACCESS_KEY_SECRET: ${env(ALIYUN_ACCESS_KEY_SECRET)}
       triggers:
-        - name: renewal-timer
-          type: timer
-          config:
+        - triggerName: renewal-timer
+          triggerType: timer
+          triggerConfig:
             cronExpression: ${env(CRON_EXPRESSION)}
             enable: true
             payload: ''

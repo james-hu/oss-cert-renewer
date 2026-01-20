@@ -1,2 +1,4 @@
 bin/
 run.bat
+cmd/fc/target/
+node_modules/
